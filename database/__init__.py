@@ -1,28 +1,33 @@
 import ast
 import redis
 import os
+from urllib.parse import urlparse
 
-
-
+# Import config
 if bool(os.environ.get("WEBHOOK", False)):
     from sample_config import Config
 else:
     from config import Config
 
-INFO = Config.REDIS_URI.split(":")
+# Parse Redis URI properly
+parsed_redis_url = urlparse(Config.REDIS_URI)
 
+REDIS_HOST = parsed_redis_url.hostname
+REDIS_PORT = parsed_redis_url.port
+REDIS_PASS = parsed_redis_url.password
+
+# Initialize Redis connection
 DB = redis.StrictRedis(
-    host=INFO[0],
-    port=INFO[1],
-    password=Config.REDIS_PASS,
+    host=REDIS_HOST,
+    port=REDIS_PORT,
+    password=REDIS_PASS,
     charset="utf-8",
     decode_responses=True,
 )
 
 def get_stuff(WHAT):
-    n = []
     cha = DB.get(WHAT)
     if not cha:
-        cha = "{}"
-    n.append(ast.literal_eval(cha))
-    return n[0]
+        return {}  # Return an empty dictionary instead of a list with a dictionary
+    return ast.literal_eval(cha)
+
