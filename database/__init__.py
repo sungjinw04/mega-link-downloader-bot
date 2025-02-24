@@ -3,7 +3,6 @@ import redis
 import os
 from urllib.parse import urlparse
 
-# Import config
 if bool(os.environ.get("WEBHOOK", False)):
     from sample_config import Config
 else:
@@ -12,14 +11,14 @@ else:
 # Parse Redis URI properly
 parsed_redis_url = urlparse(Config.REDIS_URI)
 
-REDIS_HOST = parsed_redis_url.hostname
-REDIS_PORT = parsed_redis_url.port
-REDIS_PASS = parsed_redis_url.password
+REDIS_HOST = parsed_redis_url.hostname or "localhost"
+REDIS_PORT = parsed_redis_url.port or 6379  # Default Redis port
+REDIS_PASS = parsed_redis_url.password or None
 
 # Initialize Redis connection
 DB = redis.StrictRedis(
     host=REDIS_HOST,
-    port=REDIS_PORT,
+    port=int(REDIS_PORT),  # Ensure port is an integer
     password=REDIS_PASS,
     charset="utf-8",
     decode_responses=True,
@@ -28,6 +27,6 @@ DB = redis.StrictRedis(
 def get_stuff(WHAT):
     cha = DB.get(WHAT)
     if not cha:
-        return {}  # Return an empty dictionary instead of a list with a dictionary
+        return {}  
     return ast.literal_eval(cha)
 
